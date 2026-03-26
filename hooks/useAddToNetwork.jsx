@@ -15,7 +15,7 @@ export async function addToNetwork({ address, chain, rpc }) {
         await connectWallet();
       }
 
-      const rpcUrls = rpc ? [rpc] : chain.rpc.map((r) => r?.url ?? r)
+      const rpcUrls = rpc ? [rpc] : chain.rpc.map((rpcEntry) => rpcEntry?.url ?? rpcEntry)
 
       const params = {
         chainId: toHex(chain.chainId), // A 0x-prefixed hexadecimal string
@@ -33,13 +33,13 @@ export async function addToNetwork({ address, chain, rpc }) {
         ],
       };
 
-      const result = await window.ethereum.request({
+      const walletResponse = await window.ethereum.request({
         method: "wallet_addEthereumChain",
         params: [params, address],
       });
 
       // the 'wallet_addEthereumChain' method returns null if the request was successful
-      if (result === null && CHAINS_MONITOR.includes(chain.chainId)) {
+      if (walletResponse === null && CHAINS_MONITOR.includes(chain.chainId)) {
         if (rpc && rpc.includes("llamarpc")) {
           Fathom.trackGoal(FATHOM_DROPDOWN_EVENTS_ID[chain.chainId], 0);
         } else if (!rpc && chain.rpc?.length > 0 && chain.rpc[0].url.includes("llamarpc")) {
@@ -49,7 +49,7 @@ export async function addToNetwork({ address, chain, rpc }) {
         }
       }
 
-      return result;
+      return walletResponse;
     } else {
       throw new Error("No Ethereum Wallet");
     }

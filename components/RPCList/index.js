@@ -10,36 +10,36 @@ import { Tooltip } from "../../components/Tooltip";
 import useAccount from "../../hooks/useAccount";
 
 export default function RPCList({ chain, lang }) {
-  const [sortChains, setSorting] = useState(true);
+  const [isSortingEnabled, setSorting] = useState(true);
 
-  const urlToData = chain.rpc.reduce((all, c) => ({ ...all, [c.url]: c }), {});
+  const urlToData = chain.rpc.reduce((all, rpcEntry) => ({ ...all, [rpcEntry.url]: rpcEntry }), {});
 
   const chains = useRPCData(chain.rpc);
 
   const data = useMemo(() => {
-    const sortedData = sortChains
+    const sortedData = isSortingEnabled
       ? chains?.sort((a, b) => {
           if (a.isLoading) {
             return 1;
           }
 
-          const h1 = a?.data?.height;
-          const h2 = b?.data?.height;
-          const l1 = a?.data?.latency;
-          const l2 = b?.data?.latency;
+          const chainAHeight = a?.data?.height;
+          const chainBHeight = b?.data?.height;
+          const chainALatency = a?.data?.latency;
+          const chainBLatency = b?.data?.latency;
 
-          if (!h2) {
+          if (!chainBHeight) {
             return -1;
           }
 
-          if (h2 - h1 > 0) {
+          if (chainBHeight - chainAHeight > 0) {
             return 1;
           }
-          if (h2 - h1 < 0) {
+          if (chainBHeight - chainAHeight < 0) {
             return -1;
           }
-          if (h1 === h2) {
-            if (l1 - l2 < 0) {
+          if (chainAHeight === chainBHeight) {
+            if (chainALatency - chainBLatency < 0) {
               return -1;
             } else {
               return 1;
@@ -48,29 +48,29 @@ export default function RPCList({ chain, lang }) {
         })
       : chains;
 
-    const topRpc = sortedData[0]?.data ?? {};
+    const bestRpc = sortedData[0]?.data ?? {};
 
     return sortedData.map(({ data, ...rest }) => {
       const { height = null, latency = null, url = "" } = data || {};
 
-      let trust = "transparent";
+      let trustScore = "transparent";
       let disableConnect = false;
 
-      if (!height || !latency || topRpc.height - height > 3 || latency - topRpc.latency > 5000) {
-        trust = "red";
-      } else if (topRpc.height - height < 2 && topRpc.latency - latency > -600) {
-        trust = "green";
+      if (!height || !latency || bestRpc.height - height > 3 || latency - bestRpc.latency > 5000) {
+        trustScore = "red";
+      } else if (bestRpc.height - height < 2 && bestRpc.latency - latency > -600) {
+        trustScore = "green";
       } else {
-        trust = "orange";
+        trustScore = "orange";
       }
 
       if (url.includes("wss://") || url.includes("API_KEY")) disableConnect = true;
 
-      const lat = latency ? (latency / 1000).toFixed(3) + "s" : null;
+      const formattedLatency = latency ? (latency / 1000).toFixed(3) + "s" : null;
 
       return {
         ...rest,
-        data: { ...data, height, latency: lat, trust, disableConnect },
+        data: { ...data, height, latency: formattedLatency, trustScore, disableConnect },
       };
     });
   }, [chains]);
@@ -84,9 +84,9 @@ export default function RPCList({ chain, lang }) {
           <span className="mr-4">{`${chain.name} RPC URL List`}</span>
           <button
             className="text-sm font-normal flex items-center gap-1 absolute right-4 top-[2px] bottom-[2px] dark:hover:bg-[#171717] hover:bg-[#EAEAEA] px-2 rounded-[10px]"
-            onClick={() => setSorting(!sortChains)}
+            onClick={() => setSorting(!isSortingEnabled)}
           >
-            {sortChains ? (
+            {isSortingEnabled ? (
               <span>
                 <span className="sr-only">Pause</span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -194,11 +194,11 @@ const Row = ({ values, chain, privacy, lang, className }) => {
           <Shimmer />
         ) : (
           <>
-            {data.trust === "green" ? (
+            {data.trustScore === "green" ? (
               <GreenIcon />
-            ) : data.trust === "red" ? (
+            ) : data.trustScore === "red" ? (
               <RedIcon />
-            ) : data.trust === "orange" ? (
+            ) : data.trustScore === "orange" ? (
               <OrangeIcon />
             ) : null}
           </>

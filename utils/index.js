@@ -62,7 +62,7 @@ export function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-export const fetcher = (...args) => fetch(...args).then((res) => res.json());
+export const fetcher = (...args) => fetch(...args).then((response) => response.json());
 
 export const renderProviderText = (address) => {
   if (address) {
@@ -102,9 +102,9 @@ export const isTestnet = (chain) => {
     chain.name,
     chain.title,
     chain.network
-  ].map((val) => val?.toLowerCase());
+  ].map((chainValue) => chainValue?.toLowerCase());
 
   return TESTNET_KEYWORDS.some((keyword) =>
-    lowercaseValues.some((val) => val?.includes(keyword))
+    lowercaseValues.some((chainValue) => chainValue?.includes(keyword))
   );
 };

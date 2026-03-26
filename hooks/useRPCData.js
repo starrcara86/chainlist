@@ -14,19 +14,19 @@ export const rpcBody = JSON.stringify({
 const fetchChain = async (baseURL) => {
   if (baseURL.includes("API_KEY")) return null;
   try {
-    let API = axios.create({
+    let axiosInstance = axios.create({
       baseURL,
       headers: {
         "Content-Type": "application/json",
       },
     });
 
-    API.interceptors.request.use(function (request) {
+    axiosInstance.interceptors.request.use(function (request) {
       request.requestStart = Date.now();
       return request;
     });
 
-    API.interceptors.response.use(
+    axiosInstance.interceptors.response.use(
       function (response) {
         response.latency = Date.now() - response.config.requestStart;
         return response;
@@ -40,7 +40,7 @@ const fetchChain = async (baseURL) => {
       },
     );
 
-    let { data, latency } = await API.post("", rpcBody);
+    let { data, latency } = await axiosInstance.post("", rpcBody);
 
     return { ...data, latency };
   } catch (error) {
@@ -102,8 +102,8 @@ const fetchWssChain = async (baseURL) => {
       queryFn.resolve({ ...data, latency });
     };
 
-    socket.onerror = function (e) {
-      queryFn.reject(e);
+    socket.onerror = function (socketError) {
+      queryFn.reject(socketError);
     };
 
     return await queryFn;

@@ -18,18 +18,18 @@ export default function Chain({ chain, buttonOnly, lang }) {
     return chain.chainSlug ? `https://icons.llamao.fi/icons/chains/rsz_${chain.chainSlug}.jpg` : "/unknown-logo.png";
   }, [chain]);
 
-  const chainId = useChain((state) => state.id);
+  const selectedChainId = useChain((state) => state.chainId);
   const updateChain = useChain((state) => state.updateChain);
 
   const handleClick = () => {
-    if (chain.chainId === chainId) {
+    if (chain.chainId === selectedChainId) {
       updateChain(null);
     } else {
       updateChain(chain.chainId);
     }
   };
 
-  const showAddlInfo = chain.chainId === chainId;
+  const isRpcListVisible = chain.chainId === selectedChainId;
 
   const { data: accountData } = useAccount();
 
@@ -108,7 +108,7 @@ export default function Chain({ chain, buttonOnly, lang }) {
               stroke="currentColor"
               className="w-4 h-4"
               style={{
-                transform: showAddlInfo ? "rotate(180deg)" : "",
+                transform: isRpcListVisible ? "rotate(180deg)" : "",
                 transition: "all 0.2s ease",
               }}
             >
@@ -118,7 +118,7 @@ export default function Chain({ chain, buttonOnly, lang }) {
         )}
       </div>
 
-      {showAddlInfo && <RPCList chain={chain} lang={lang} />}
+      {isRpcListVisible && <RPCList chain={chain} lang={lang} />}
     </>
   );
 }

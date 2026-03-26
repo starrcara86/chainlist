@@ -4,14 +4,14 @@ import fetch from "node-fetch";
 import { overwrittenChains } from "../constants/additionalChainRegistry/list.js";
 import { isTestnet } from "./index.js";
 
-export const fetcher = (...args) => fetch(...args).then((res) => res.json());
+export const fetcher = (...args) => fetch(...args).then((response) => response.json());
 
 const cache = {};
 export const fetchWithCache = async (url) => {
   if (cache[url]) {
     return cache[url];
   }
-  const data = await fetch(url).then((res) => res.json());
+  const data = await fetch(url).then((response) => response.json());
   cache[url] = data;
   return data;
 };
@@ -39,7 +39,7 @@ export function populateChain(chain, chainTvls) {
   for (const rpcUrl of chain.rpc) {
     const rpc = removeEndingSlashObject(rpcUrl);
 
-    if (!rpc.url.includes("${INFURA_API_KEY}") && !rpcs.find((r) => r.url === rpc.url)) {
+    if (!rpc.url.includes("${INFURA_API_KEY}") && !rpcs.find((existingRpc) => existingRpc.url === rpc.url)) {
       rpcs = [...rpcs, rpc];
     }
   }
@@ -49,7 +49,7 @@ export function populateChain(chain, chainTvls) {
   const chainSlug = chainIds[chain.chainId];
 
   if (chainSlug !== undefined) {
-    const defiChain = chainTvls.find((c) => c.name.toLowerCase() === chainSlug);
+    const defiChain = chainTvls.find((tvlEntry) => tvlEntry.name.toLowerCase() === chainSlug);
 
     return {
       ...chain,
@@ -63,7 +63,7 @@ export function populateChain(chain, chainTvls) {
 
 export function mergeDeep(target, source) {
   const newTarget = { ...target };
-  const isObject = (obj) => obj && typeof obj === "object";
+  const isObject = (value) => value && typeof value === "object";
 
   if (!isObject(newTarget) || !isObject(source)) {
     return source;
@@ -91,9 +91,9 @@ export function arrayMove(array, fromIndex, toIndex) {
 
   if (startIndex >= 0 && startIndex < newArray.length) {
     const endIndex = toIndex < 0 ? newArray.length + toIndex : toIndex;
-    const [item] = newArray.splice(fromIndex, 1);
+    const [elementToMove] = newArray.splice(fromIndex, 1);
 
-    newArray.splice(endIndex, 0, item);
+    newArray.splice(endIndex, 0, elementToMove);
   }
 
   return newArray;
@@ -156,21 +156,21 @@ export async function generateChainData() {
   }, {});
 
   const activeChains = chains
-    .filter((c) => c.status !== "deprecated" && !overwrittenIds[c.chainId])
+    .filter((chain) => chain.status !== "deprecated" && !overwrittenIds[chain.chainId])
     .concat(overwrittenChains)
     .map((chain) => populateChain(chain, chainTvls));
 
   const chainsWithTestnetTvls = handleTestnets(activeChains);
 
-  const sortedChains = chainsWithTestnetTvls.sort((a, b) => {
+  const sortedChains = chainsWithTestnetTvls.sort((chainA, chainB) => {
     // First: separate mainnets and testnets (mainnets first)
-    if (!a.isTestnet && b.isTestnet) return -1;
-    if (a.isTestnet && !b.isTestnet) return 1;
+    if (!chainA.isTestnet && chainB.isTestnet) return -1;
+    if (chainA.isTestnet && !chainB.isTestnet) return 1;
 
     // Second: within same type (mainnet or testnet), sort by TVL (descending)
-    const aTvl = a.tvl ?? 0;
-    const bTvl = b.tvl ?? 0;
-    return bTvl - aTvl;
+    const chainATvl = chainA.tvl ?? 0;
+    const chainBTvl = chainB.tvl ?? 0;
+    return chainBTvl - chainATvl;
   });
 
   return sortedChains;
