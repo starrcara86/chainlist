@@ -9,25 +9,25 @@ import { useChain } from "../../stores";
 import useAccount from "../../hooks/useAccount";
 import useAddToNetwork from "../../hooks/useAddToNetwork";
 
-export default function Chain({ chain, buttonOnly, lang }) {
+const Chain = React.memo(function Chain({ chain, buttonOnly, lang }) {
   const t = useTranslations("Common", lang);
 
   const router = useRouter();
 
   const icon = React.useMemo(() => {
     return chain.chainSlug ? `https://icons.llamao.fi/icons/chains/rsz_${chain.chainSlug}.jpg` : "/unknown-logo.png";
-  }, [chain]);
+  }, [chain.chainSlug]);
 
   const chainId = useChain((state) => state.id);
   const updateChain = useChain((state) => state.updateChain);
 
-  const handleClick = () => {
+  const handleClick = React.useCallback(() => {
     if (chain.chainId === chainId) {
       updateChain(null);
     } else {
       updateChain(chain.chainId);
     }
-  };
+  }, [chain.chainId, chainId, updateChain]);
 
   const showAddlInfo = chain.chainId === chainId;
 
@@ -121,4 +121,6 @@ export default function Chain({ chain, buttonOnly, lang }) {
       {showAddlInfo && <RPCList chain={chain} lang={lang} />}
     </>
   );
-}
+});
+
+export default Chain;

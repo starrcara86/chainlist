@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { notTranslation as useTranslations } from "../../utils";
 import CopyUrl from "../CopyUrl";
 import useRPCData from "../../hooks/useRPCData";
@@ -8,17 +8,21 @@ import { useRpcStore } from "../../stores";
 import { renderProviderText } from "../../utils";
 import { Tooltip } from "../../components/Tooltip";
 import useAccount from "../../hooks/useAccount";
+import React from "react";
 
 export default function RPCList({ chain, lang }) {
   const [sortChains, setSorting] = useState(true);
 
-  const urlToData = chain.rpc.reduce((all, c) => ({ ...all, [c.url]: c }), {});
+  const urlToData = useMemo(
+    () => chain.rpc.reduce((all, c) => ({ ...all, [c.url]: c }), {}),
+    [chain.rpc]
+  );
 
   const chains = useRPCData(chain.rpc);
 
   const data = useMemo(() => {
     const sortedData = sortChains
-      ? chains?.sort((a, b) => {
+      ? [...chains].sort((a, b) => {
           if (a.isLoading) {
             return 1;
           }
@@ -73,7 +77,7 @@ export default function RPCList({ chain, lang }) {
         data: { ...data, height, latency: lat, trust, disableConnect },
       };
     });
-  }, [chains]);
+  }, [chains, sortChains]);
 
   const { rpcData, hasLlamaNodesRpc } = useLlamaNodesRpcData(chain.chainId, data);
 
@@ -161,7 +165,7 @@ function PrivacyIcon({ tracking, isOpenSource = false }) {
   return <EmptyIcon />;
 }
 
-const Row = ({ values, chain, privacy, lang, className }) => {
+const Row = React.memo(function Row({ values, chain, privacy, lang, className }) {
   const t = useTranslations("Common", lang);
   const { data, isLoading, refetch } = values;
 
@@ -227,7 +231,7 @@ const Row = ({ values, chain, privacy, lang, className }) => {
       </td>
     </tr>
   );
-};
+});
 
 const EmptyIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" fill="none" className="w-4 h-4 mx-auto">
