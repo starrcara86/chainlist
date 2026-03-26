@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import Chain from "../../components/chain";
 import { generateChainData } from "../../utils/fetch";
+import { isTestnet } from "../../utils";
 
 export async function getStaticProps() {
   const sortedChains = await generateChainData();
@@ -22,39 +23,39 @@ function Home({ chains }) {
   const router = useRouter();
   const { testnets, testnet, search } = router.query;
 
-  const chainToFilter = search?.length > 0 && chainName.length === 0 ? search : chainName;
+  const chainToFilter = React.useMemo(() => {
+    if (search?.length > 0 && chainName.length === 0) {
+      return typeof search === "string" ? search : search[0];
+    }
+    return chainName;
+  }, [search, chainName]);
 
-  const includeTestnets =
-    (typeof testnets === "string" && testnets === "true") || (typeof testnet === "string" && testnet === "true");
+  const includeTestnets = React.useMemo(() => {
+    return (testnets === "true" || testnet === "true");
+  }, [testnets, testnet]);
 
-  const sortedChains = !includeTestnets
-    ? chains.filter((item) => {
-        const testnet =
-          item.name?.toLowerCase().includes("test") ||
-          item.title?.toLowerCase().includes("test") ||
-          item.network?.toLowerCase().includes("test");
-        const devnet =
-          item.name?.toLowerCase().includes("devnet") ||
-          item.title?.toLowerCase().includes("devnet") ||
-          item.network?.toLowerCase().includes("devnet");
-        return !testnet && !devnet;
-      })
-    : chains;
+  const filteredChains = React.useMemo(() => {
+    if (!chains?.length) return [];
 
-  const filteredChains =
-    !chainToFilter || typeof chainToFilter !== "string" || chainToFilter === ""
-      ? sortedChains
-      : sortedChains.filter((chain) => {
-          //filter
-          return (
-            chain.chain.toLowerCase().includes(chainToFilter.toLowerCase()) ||
-            chain.chainId.toString().toLowerCase().includes(chainToFilter.toLowerCase()) ||
-            chain.name.toLowerCase().includes(chainToFilter.toLowerCase()) ||
-            (chain.nativeCurrency ? chain.nativeCurrency.symbol : "")
-              .toLowerCase()
-              .includes(chainToFilter.toLowerCase())
-          );
-        });
+    const normalized = chainToFilter?.toLowerCase() ?? "";
+    const hasFilter = normalized.length > 0;
+
+    return chains.filter((chain) => {
+      if (!includeTestnets && isTestnet(chain)) return false;
+
+      if (hasFilter) {
+        return (
+          chain.chain.toLowerCase().includes(normalized) ||
+          chain.chainId.toString().includes(normalized) ||
+          chain.name.toLowerCase().includes(normalized) ||
+          (chain.nativeCurrency?.symbol ?? "").toLowerCase().includes(normalized)
+        );
+      }
+
+      return true;
+    });
+  }, [chains, includeTestnets, chainToFilter]);
+
   return (
     <>
       <Head>
@@ -70,7 +71,7 @@ function Home({ chains }) {
         <React.Suspense fallback={<div className="h-screen"></div>}>
           <div className="grid gap-5 grid-cols-1 place-content-between pb-4 sm:pb-10 sm:grid-cols-[repeat(auto-fit,_calc(50%_-_15px))] 3xl:grid-cols-[repeat(auto-fit,_calc(33%_-_20px))] isolate grid-flow-dense">
             {filteredChains.map((chain) => (
-              <Chain chain={chain} key={JSON.stringify(chain) + "zh"} lang="zh" />
+              <Chain chain={chain} key={chain.chainId + "zh"} lang="zh" />
             ))}
           </div>
         </React.Suspense>

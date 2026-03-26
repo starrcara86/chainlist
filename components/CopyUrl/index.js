@@ -7,11 +7,11 @@ export default function CopyUrl({ url }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        setOpen(false);
-      }, 500);
-    }
+    if (!open) return;
+    const timerId = setTimeout(() => {
+      setOpen(false);
+    }, 500);
+    return () => clearTimeout(timerId);
   }, [open]);
 
   const popover = usePopoverStore({ placement: "bottom", open });

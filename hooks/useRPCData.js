@@ -65,7 +65,7 @@ const useHttpQuery = (url) => {
     queryKey: [url],
     queryFn: () => fetchChain(url),
     refetchInterval,
-    select: useCallback((data) => formatData(url, data), []),
+    select: useCallback((data) => formatData(url, data), [url]),
   };
 };
 
@@ -116,7 +116,7 @@ const useSocketQuery = (url) => {
   return {
     queryKey: [url],
     queryFn: () => fetchWssChain(url),
-    select: useCallback((data) => formatData(url, data), []),
+    select: useCallback((data) => formatData(url, data), [url]),
     refetchInterval,
   };
 };

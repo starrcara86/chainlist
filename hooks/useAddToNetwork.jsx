@@ -59,9 +59,9 @@ export async function addToNetwork({ address, chain, rpc }) {
   }
 }
 
-export default function useAddToNetwork() {
-  const queryClient = new QueryClient();
+const queryClient = new QueryClient();
 
+export default function useAddToNetwork() {
   return useMutation(addToNetwork, {
     onSettled: () => {
       queryClient.invalidateQueries();
