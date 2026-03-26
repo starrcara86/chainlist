@@ -21,7 +21,7 @@ export async function getStaticProps() {
 function Home({ chains }) {
   const { chainName, setChainName, finalChains } = useFilteredChains(chains);
 
-  const [end, setEnd] = React.useState(15);
+  const [visibleChainCount, setVisibleChainCount] = React.useState(15);
 
   return (
     <>
@@ -41,14 +41,14 @@ function Home({ chains }) {
               return <Chain chain={chain} key={JSON.stringify(chain) + "en"} lang="en" />;
             })}
             <AdBanner />
-            {finalChains.slice(2, end).map((chain) => {
+            {finalChains.slice(2, visibleChainCount).map((chain) => {
               return <Chain chain={chain} key={JSON.stringify(chain) + "en"} lang="en" />;
             })}
           </div>
         </React.Suspense>
-        {end < finalChains.length ? (
+        {visibleChainCount < finalChains.length ? (
           <button
-            onClick={() => setEnd(finalChains.length)}
+            onClick={() => setVisibleChainCount(finalChains.length)}
             className="w-full border dark:border-[#171717] border-[#EAEAEA] px-4 py-2 rounded-[50px] mb-auto text-white bg-[#2F80ED] mx-auto"
           >
             Show all
